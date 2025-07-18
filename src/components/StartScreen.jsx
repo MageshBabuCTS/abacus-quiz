@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSeedling, faArrowUp, faRocket } from '@fortawesome/free-solid-svg-icons';
+import { faSeedling, faArrowUp, faRocket, faJetFighter, faStar } from '@fortawesome/free-solid-svg-icons';
 import { LEVELS, DEFAULT_LEVEL } from '../constants';
 
 const StartScreen = ({ name, onNameChange, onStartQuiz }) => {
@@ -16,12 +16,16 @@ const StartScreen = ({ name, onNameChange, onStartQuiz }) => {
 
   const getLevelIcon = (levelId) => {
     switch (levelId) {
+      case 'primary':
+        return <FontAwesomeIcon icon={faStar} className="level-icon" />;
       case 'beginner':
         return <FontAwesomeIcon icon={faSeedling} className="level-icon" />;
       case 'intermediate':
         return <FontAwesomeIcon icon={faArrowUp} className="level-icon" />;
       case 'advanced':
         return <FontAwesomeIcon icon={faRocket} className="level-icon" />;
+      case 'mach':
+        return <FontAwesomeIcon icon={faJetFighter} className="level-icon" />;
       default:
         return null;
     }
