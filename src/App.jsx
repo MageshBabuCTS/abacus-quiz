@@ -8,19 +8,19 @@ import './App.css';
 
 function App() {
   const [name, setName] = useState('');
-  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
-  const [userAnswer, setUserAnswer] = useState('');
   const [questions, setQuestions] = useState([]);
   const [selectedLevel, setSelectedLevel] = useState(DEFAULT_LEVEL);
   const navigate = useNavigate();
   const { questionIndex } = useParams() || {};
 
+  // Initialize questions when component mounts or level changes
   useEffect(() => {
     if (questionIndex !== undefined) {
       const index = parseInt(questionIndex, 10);
       if (!isNaN(index) && index >= 0 && index < TOTAL_QUESTIONS) {
-        setCurrentQuestion(index);
+        setCurrentQuestionIndex(index);
       }
     }
   }, [questionIndex]);
@@ -29,50 +29,85 @@ function App() {
     if (username && username.trim()) {
       setName(username);
       setSelectedLevel(level);
-      const newQuestions = generateQuestions(level);
+      const newQuestions = generateQuestions(level).map(q => ({
+        ...q,
+        userAnswer: '',
+        isAnswered: false
+      }));
       setQuestions(newQuestions);
-      setCurrentQuestion(0);
+      setCurrentQuestionIndex(0);
       setScore(0);
-      setUserAnswer('');
       navigate('/quiz/0');
     }
   };
 
-  const handleAnswerSubmit = (answer) => {
-    if (answer === '') return;
-
+  const handleAnswerChange = (answer) => {
     const updatedQuestions = [...questions];
-    const currentQ = updatedQuestions[currentQuestion];
-    const isCorrect = parseInt(answer) === currentQ.correctAnswer;
-    
-    updatedQuestions[currentQuestion] = {
-      ...currentQ,
-      userAnswer: parseInt(answer),
-      isCorrect: isCorrect
+    updatedQuestions[currentQuestionIndex] = {
+      ...updatedQuestions[currentQuestionIndex],
+      userAnswer: answer,
+      isAnswered: answer !== ''
     };
-
     setQuestions(updatedQuestions);
-    setUserAnswer('');
+  };
 
-    if (isCorrect) {
-      setScore(score + 1);
+  const handleAnswerSubmit = () => {
+    const currentQ = questions[currentQuestionIndex];
+    if (!currentQ || currentQ.userAnswer === '') return;
+
+    const userAnswer = parseInt(currentQ.userAnswer, 10);
+    const correctAnswer = parseInt(currentQ.correctAnswer, 10);
+    const isCorrect = userAnswer === correctAnswer;
+    
+    setQuestions(prevQuestions => {
+      const updatedQuestions = [...prevQuestions];
+      updatedQuestions[currentQuestionIndex] = {
+        ...currentQ,
+        userAnswer: userAnswer.toString(),
+        isCorrect,
+        isAnswered: true
+      };
+      return updatedQuestions;
+    });
+    
+    // Update score if the answer is correct and wasn't already counted
+    if (isCorrect && !currentQ.isAnswered) {
+      setScore(prevScore => prevScore + 1);
     }
 
-    if (currentQuestion < TOTAL_QUESTIONS - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      navigate(`/quiz/${currentQuestion + 1}`);
+    // Move to next question if not the last one
+    if (currentQuestionIndex < TOTAL_QUESTIONS - 1) {
+      navigate(`/quiz/${currentQuestionIndex + 1}`);
     } else {
       navigate('/results');
     }
   };
 
+  const goToNextQuestion = (targetIndex = null) => {
+    const nextIndex = targetIndex !== null ? targetIndex : currentQuestionIndex + 1;
+    if (nextIndex < TOTAL_QUESTIONS) {
+      setCurrentQuestionIndex(nextIndex);
+      navigate(`/quiz/${nextIndex}`);
+    }
+  };
+
+  const goToPrevQuestion = (targetIndex = null) => {
+    const prevIndex = targetIndex !== null ? targetIndex : currentQuestionIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentQuestionIndex(prevIndex);
+      navigate(`/quiz/${prevIndex}`);
+    }
+  };
+
   const restartQuiz = () => {
-    // Keep the same level when restarting
-    const newQuestions = generateQuestions(selectedLevel);
+    const newQuestions = generateQuestions(selectedLevel).map(q => ({
+      ...q,
+      userAnswer: '',
+      isAnswered: false
+    }));
     setQuestions(newQuestions);
-    setCurrentQuestion(0);
+    setCurrentQuestionIndex(0);
     setScore(0);
-    setUserAnswer('');
     navigate('/quiz/0');
   };
 
@@ -87,38 +122,28 @@ function App() {
           path="/" 
           element={
             <StartScreen 
-              name={name} 
-              onNameChange={setName} 
-              onStartQuiz={handleStartQuiz} 
-            />
-          } 
-        />
-        <Route 
-          path="/quiz" 
-          element={
-            <QuizQuestion
-              currentQuestion={currentQuestion}
-              totalQuestions={TOTAL_QUESTIONS}
-              question={questions[currentQuestion]?.question || ''}
-              userAnswer={userAnswer}
-              score={score}
-              onAnswerSubmit={() => handleAnswerSubmit(userAnswer)}
-              onAnswerChange={setUserAnswer}
+              name={name}
+              onNameChange={setName}
+              onStartQuiz={handleStartQuiz}
             />
           } 
         />
         <Route 
           path="/quiz/:questionIndex" 
           element={
-            <QuizQuestion
-              currentQuestion={currentQuestion}
-              totalQuestions={TOTAL_QUESTIONS}
-              question={questions[currentQuestion]?.question || ''}
-              userAnswer={userAnswer}
-              score={score}
-              onAnswerSubmit={() => handleAnswerSubmit(userAnswer)}
-              onAnswerChange={setUserAnswer}
-            />
+            questions.length > 0 && currentQuestionIndex < questions.length ? (
+              <QuizQuestion
+                currentQuestion={currentQuestionIndex}
+                totalQuestions={TOTAL_QUESTIONS}
+                question={questions[currentQuestionIndex]?.question || ''}
+                userAnswer={questions[currentQuestionIndex]?.userAnswer || ''}
+                score={score}
+                onAnswerSubmit={handleAnswerSubmit}
+                onAnswerChange={handleAnswerChange}
+                onNextQuestion={goToNextQuestion}
+                onPrevQuestion={goToPrevQuestion}
+              />
+            ) : null
           } 
         />
         <Route 
@@ -140,7 +165,7 @@ function App() {
           element={
             <div className="app">
               <h1>Page Not Found</h1>
-              <button onClick={() => navigate('/')} className="restart-button">
+              <button onClick={goToHome} className="restart-button">
                 Back to Home
               </button>
             </div>

@@ -19,136 +19,167 @@ const QuizResult = ({
   name, 
   score, 
   totalQuestions, 
-  questions, 
+  questions = [], 
   onRestart, 
   onGoHome,
   level 
 }) => {
-  const percentage = (score / totalQuestions) * 100;
-  const levelConfig = Object.values(LEVELS).find(l => l.id === level) || LEVELS.BEGINNER;
+  // Calculate statistics from questions array
+  const totalAnswered = questions.filter(q => q.userAnswer !== undefined && q.userAnswer !== '').length;
+  const correctCount = questions.filter(q => 
+    q.userAnswer !== undefined && 
+    q.userAnswer !== '' && 
+    String(q.userAnswer).trim() === String(q.correctAnswer).trim()
+  ).length;
+  const incorrectCount = totalAnswered - correctCount;
+  const unansweredCount = questions.length - totalAnswered;
   
-  let resultIcon;
-  let resultMessage;
-  let resultClass;
-
+  const correctPercentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
+  const incorrectPercentage = questions.length > 0 ? Math.round((incorrectCount / questions.length) * 100) : 0;
+  const unansweredPercentage = 100 - correctPercentage - incorrectPercentage;
+  
+  const levelConfig = LEVELS[level?.toUpperCase()] || LEVELS.BEGINNER;
+  
   // Determine result level and set appropriate icon and message
-  if (percentage === 100) {
-    resultIcon = <FontAwesomeIcon icon={faTrophy} className="result-icon perfect" />;
-    resultMessage = `Perfect! You're a ${levelConfig.name.toLowerCase()} math wizard! 🎯`;
-    resultClass = 'perfect-score';
-  } else if (percentage >= 80) {
-    resultIcon = <FontAwesomeIcon icon={faThumbsUp} className="result-icon excellent" />;
-    resultMessage = `Excellent work on ${levelConfig.name.toLowerCase()} level! You're really good at this! 🌟`;
-    resultClass = 'excellent-score';
-  } else if (percentage >= 60) {
-    resultIcon = <FontAwesomeIcon icon={faSmileBeam} className="result-icon good" />;
-    resultMessage = `Good job! With a little more practice, you'll master the ${levelConfig.name.toLowerCase()} level! 👍`;
-    resultClass = 'good-score';
-  } else if (percentage >= 40) {
-    resultIcon = <FontAwesomeIcon icon={faMeh} className="result-icon average" />;
-    resultMessage = `Not bad for ${levelConfig.name.toLowerCase()} level! Keep practicing and you'll improve! 💪`;
-    resultClass = 'average-score';
-  } else {
-    resultIcon = <FontAwesomeIcon icon={faFire} className="result-icon keep-trying" />;
-    resultMessage = `Keep trying the ${levelConfig.name.toLowerCase()} level! Every expert was once a beginner. 🔥`;
-    resultClass = 'keep-trying-score';
-  }
-  
-  const getLevelIcon = (levelId) => {
-    switch (levelId) {
-      case 'beginner':
-        return <FontAwesomeIcon icon={faSeedling} className="level-icon" />;
-      case 'intermediate':
-        return <FontAwesomeIcon icon={faArrowUp} className="level-icon" />;
-      case 'advanced':
-        return <FontAwesomeIcon icon={faRocket} className="level-icon" />;
-      default:
-        return <FontAwesomeIcon icon={faSeedling} className="level-icon" />;
+  const getResultData = () => {
+    const percentage = correctPercentage;
+    if (percentage === 100) {
+      return {
+        icon: faTrophy,
+        message: `Perfect! You're a ${levelConfig.name.toLowerCase()} math wizard! 🎯`,
+        className: 'perfect-score'
+      };
+    } else if (percentage >= 80) {
+      return {
+        icon: faThumbsUp,
+        message: `Excellent work on ${levelConfig.name.toLowerCase()} level!`,
+        className: 'excellent-score'
+      };
+    } else if (percentage >= 60) {
+      return {
+        icon: faSmileBeam,
+        message: `Good job on the ${levelConfig.name.toLowerCase()} level!`,
+        className: 'good-score'
+      };
+    } else if (percentage >= 40) {
+      return {
+        icon: faMeh,
+        message: `Not bad for ${levelConfig.name.toLowerCase()} level!`,
+        className: 'average-score'
+      };
+    } else {
+      return {
+        icon: faFire,
+        message: `Keep practicing the ${levelConfig.name.toLowerCase()} level!`,
+        className: 'keep-trying-score'
+      };
     }
+  };
+
+  const { icon, message, className } = getResultData();
+  
+  // Get level icon
+  const getLevelIcon = () => {
+    switch(levelConfig.id) {
+      case 'beginner': return faSeedling;
+      case 'intermediate': return faArrowUp;
+      case 'advanced': return faRocket;
+      case 'mach': return faFire;
+      default: return faSeedling;
+    }
+  };
+
+  // Check if answer is correct
+  const isAnswerCorrect = (question) => {
+    if (!question) return false;
+    // Handle both string and number comparisons
+    return String(question.userAnswer).trim() === String(question.correctAnswer).trim();
   };
 
   return (
     <div className="app">
-      <div className={`quiz-container result-container ${resultClass}`}>
+      <div className={`quiz-container result-container ${className}`}>
         <div className="result-header">
-          <div className="result-title">
-            <h1>Quiz Completed, {name}!</h1>
-            <p className="result-subtitle">You've completed the {levelConfig.name.toLowerCase()} level!</p>
-          </div>
+          <h1>Quiz Completed, {name}!</h1>
+          <p className="result-subtitle">
+            You scored {correctCount} out of {questions.length} on the {levelConfig.name.toLowerCase()} level
+          </p>
           
-          <div className="level-badge" style={{ '--level-color': levelConfig.color }}>
-            {getLevelIcon(level)}
-            <span>{levelConfig.name} Level</span>
+          <div className="result-icon">
+            <FontAwesomeIcon icon={icon} size="3x" />
           </div>
           
           <div className="score-display">
-            <span className="score">{score}</span>
+            <span className="score">{correctCount}</span>
             <span className="score-separator">/</span>
-            <span className="total-questions">{totalQuestions}</span>
+            <span className="total-questions">{questions.length}</span>
           </div>
           
-          <div className="result-icon-container">
-            {resultIcon}
-          </div>
-          
-          <p className="result-message">{resultMessage}</p>
+          <p className="result-message">{message}</p>
           
           <div className="result-stats">
             <div className="stat-item">
-              <span className="stat-value">{Math.round(percentage)}%</span>
-              <span className="stat-label">Correct</span>
+              <span className="stat-value">{correctPercentage}%</span>
+              <span className="stat-label">Correct ({correctCount})</span>
             </div>
             <div className="stat-item">
-              <span className="stat-value">{totalQuestions - score}</span>
-              <span className="stat-label">Incorrect</span>
+              <span className="stat-value">{incorrectPercentage}%</span>
+              <span className="stat-label">Incorrect ({incorrectCount})</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">
-                {questions[0]?.level === 'beginner' ? '1-9' : 
-                 questions[0]?.level === 'intermediate' ? '1-99' : '1-999'}
+                {levelConfig.min}-{levelConfig.max}
               </span>
               <span className="stat-label">Number Range</span>
             </div>
           </div>
         </div>
         
-        <div className="results">
+        <div className="results-section">
           <h3>Your Answers:</h3>
           <div className="answers-grid">
-            {questions.map((q, index) => (
-              <div key={index} className={`result-item ${q.isCorrect ? 'correct' : 'incorrect'}`}>
-                <div className="question-number">Q{index + 1}</div>
-                <div className="question-details">
-                  <p className="question-text">{q.question} = {q.correctAnswer}</p>
-                  <p className="user-answer">
-                    Your answer: {q.isCorrect ? (
-                      <span className="correct-answer">{q.userAnswer}</span>
-                    ) : (
-                      <>
-                        <span className="wrong-answer">{q.userAnswer}</span>
-                        <span className="correct-answer"> (Correct: {q.correctAnswer})</span>
-                      </>
-                    )}
-                    {q.isCorrect ? (
-                      <FontAwesomeIcon icon={faStar} className="answer-icon correct" />
-                    ) : (
-                      <FontAwesomeIcon icon={faSadTear} className="answer-icon incorrect" />
-                    )}
-                  </p>
+            {questions.map((question, index) => {
+              const correct = isAnswerCorrect(question);
+              return (
+                <div key={index} className={`answer-item ${correct ? 'correct' : 'incorrect'}`}>
+                  <div className="question-number">Q{index + 1}</div>
+                  <div className="question-details">
+                    <div className="question-text">
+                      {question.question} = {question.correctAnswer}
+                    </div>
+                    <div className="user-answer">
+                      Your answer: {correct ? (
+                        <span className="correct-answer">{question.userAnswer}</span>
+                      ) : (
+                        <>
+                          <span className="wrong-answer">{question.userAnswer}</span>
+                          <span className="correct-answer"> (Correct: {question.correctAnswer})</span>
+                        </>
+                      )}
+                      <FontAwesomeIcon 
+                        icon={correct ? faStar : faSadTear} 
+                        className={`answer-icon ${correct ? 'correct' : 'incorrect'}`} 
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         
-        <div className="button-container">
-          <button onClick={onRestart} className="action-button restart-button">
-            <FontAwesomeIcon icon={faSyncAlt} className="button-icon" />
-            Try Again
+        <div className="result-actions">
+          <button 
+            onClick={onRestart} 
+            className="action-button restart"
+          >
+            <FontAwesomeIcon icon={faSyncAlt} /> Try Again
           </button>
-          <button onClick={onGoHome} className="action-button home-button">
-            <FontAwesomeIcon icon={faHome} className="button-icon" />
-            Change Level
+          <button 
+            onClick={onGoHome} 
+            className="action-button home"
+          >
+            <FontAwesomeIcon icon={faHome} /> Change Level
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-export const TOTAL_QUESTIONS = 5;
+export const TOTAL_QUESTIONS = 2;
 
 export const LEVELS = {
   PRIMARY: {

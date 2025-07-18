@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalculator, faArrowRight, faTrophy } from '@fortawesome/free-solid-svg-icons';
+import { faCalculator, faArrowRight, faArrowLeft, faTrophy } from '@fortawesome/free-solid-svg-icons';
 
 const QuizQuestion = ({
   currentQuestion,
@@ -10,8 +10,12 @@ const QuizQuestion = ({
   score,
   onAnswerSubmit,
   onAnswerChange,
+  onPrevQuestion,
+  onNextQuestion,
 }) => {
   const inputRef = useRef(null);
+  const isFirstQuestion = currentQuestion === 0;
+  const isLastQuestion = currentQuestion === totalQuestions - 1;
 
   useEffect(() => {
     if (inputRef.current) {
@@ -19,6 +23,27 @@ const QuizQuestion = ({
       inputRef.current.select();
     }
   }, [currentQuestion]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Only submit the answer if we're not on the last question
+    if (isLastQuestion) {
+      onAnswerSubmit();
+    } else {
+      // For non-last questions, just move to the next question
+      onNextQuestion();
+    }
+  };
+
+  const handleNextClick = (e) => {
+    e.preventDefault();
+    onNextQuestion();
+  };
+
+  const handleBackClick = (e) => {
+    e.preventDefault();
+    onPrevQuestion();
+  };
 
   return (
     <div className="app">
@@ -53,13 +78,7 @@ const QuizQuestion = ({
             <span className="question-mark">?</span>
           </div>
           
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              onAnswerSubmit();
-            }} 
-            className="answer-form"
-          >
+          <form onSubmit={handleSubmit} className="answer-form">
             <div className="input-group">
               <input
                 ref={inputRef}
@@ -69,20 +88,34 @@ const QuizQuestion = ({
                 onWheel={(e) => e.target.blur()}
                 placeholder="Your answer here..."
                 className="answer-input"
-                required
+                required={!isLastQuestion}
                 autoFocus
               />
             </div>
             
-            <div className="button-container">
-              <button type="submit" className="submit-button">
-                {currentQuestion === totalQuestions - 1 ? (
+            <div className="button-container" style={{ justifyContent: 'space-between' }}>
+              {!isFirstQuestion && (
+                <button 
+                  type="button" 
+                  onClick={handleBackClick}
+                  className="action-button back-button"
+                >
+                  <FontAwesomeIcon icon={faArrowLeft} className="button-icon" /> Back
+                </button>
+              )}
+              
+              <button 
+                type={isLastQuestion ? "submit" : "button"}
+                onClick={!isLastQuestion ? handleNextClick : undefined}
+                className={`action-button ${isLastQuestion ? 'finish-button' : 'next-button'}`}
+              >
+                {isLastQuestion ? (
                   <>
                     Finish Quiz <FontAwesomeIcon icon={faTrophy} className="button-icon" />
                   </>
                 ) : (
                   <>
-                    Next Question <FontAwesomeIcon icon={faArrowRight} className="button-icon" />
+                    Next <FontAwesomeIcon icon={faArrowRight} className="button-icon" />
                   </>
                 )}
               </button>
@@ -96,6 +129,14 @@ const QuizQuestion = ({
                 className={`progress-dot ${index <= currentQuestion ? 'active' : ''} ${
                   index < currentQuestion ? 'completed' : ''
                 }`}
+                onClick={() => {
+                  const questionIndex = parseInt(index);
+                  if (questionIndex < currentQuestion) {
+                    onPrevQuestion(questionIndex);
+                  } else if (questionIndex > currentQuestion) {
+                    onNextQuestion(questionIndex);
+                  }
+                }}
               ></div>
             ))}
           </div>
