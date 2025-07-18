@@ -933,6 +933,17 @@ h2 {
   100% { transform: scale(1); }
 }
 
+/* Hide number input spinners */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 /* Focus styles for better accessibility */
 button:focus-visible, 
 input:focus-visible {

@@ -66,6 +66,7 @@ const QuizQuestion = ({
                 type="number"
                 value={userAnswer}
                 onChange={(e) => onAnswerChange(e.target.value)}
+                onWheel={(e) => e.target.blur()}
                 placeholder="Your answer here..."
                 className="answer-input"
                 required

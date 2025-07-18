@@ -34,7 +34,7 @@ function App() {
       setCurrentQuestion(0);
       setScore(0);
       setUserAnswer('');
-      navigate('/quiz');
+      navigate('/quiz/0');
     }
   };
 
@@ -73,7 +73,7 @@ function App() {
     setCurrentQuestion(0);
     setScore(0);
     setUserAnswer('');
-    navigate('/quiz');
+    navigate('/quiz/0');
   };
 
   const goToHome = () => {
