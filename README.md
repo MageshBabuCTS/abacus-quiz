@@ -2,10 +2,32 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+## Getting Started with Vite
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+To run this project locally, follow these steps:
+
+### 1. Install dependencies
+```bash
+npm install
+```
+
+### 2. Start the development server
+```bash
+npm run dev
+```
+This will start the Vite development server. Open the URL provided in your terminal (usually http://localhost:5173) to view the app.
+
+### 3. Build for production
+```bash
+npm run build
+```
+This will create an optimized production build in the `dist` folder.
+
+### 4. Preview the production build
+```bash
+npm run preview
+```
+This will locally preview the production build at http://localhost:4173 by default.
 
 ## Expanding the ESLint configuration
 
