@@ -2,6 +2,10 @@
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
+##
+All  configuration like total no of  questions, levels, level configuration etc are in constants.js file. 
+This  can be  migrated  to database in future.
+
 ## Getting Started with Vite
 
 To run this project locally, follow these steps:
